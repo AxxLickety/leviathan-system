@@ -1,0 +1,14 @@
+# ---- local env / caches ----
+venv/
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+.vscode/
+
+# ---- data & generated outputs ----
+data/
+outputs/
+reports/
+.envrc
