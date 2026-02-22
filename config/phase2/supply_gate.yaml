@@ -1,0 +1,14 @@
+phase: 2
+master_csv: outputs/path_a/master.csv
+supply_csv: data/supply/processed/supply_quarterly.csv
+supply_candidates:
+- months_supply
+gate:
+  method: rolling_percentile
+  threshold: 0.8
+  window: 20
+  lag: 2
+rule:
+  hold_unless: "not (regime==0 and supply_high==1)"
+outputs:
+  sanity_csv: outputs/phase2/phase2_sanity.csv

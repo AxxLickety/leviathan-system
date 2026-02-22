@@ -1,0 +1,104 @@
+simple.py
+
+# src/backtests/simple.py
+
+import pandas as pd
+import numpy as np
+
+
+def run_long_short_backtest(
+    df: pd.DataFrame,
+    signal_col: str,
+    return_col: str,
+    top_q: float = 0.2,
+    bottom_q: float = 0.2,
+    group_col: str = "date",
+):
+    """
+    Each period:
+        - Long the bottom_q quantile of the signal (cheap / attractive)
+        - Short the top_q quantile of the signal (expensive / vulnerable)
+
+    Returns DataFrame with:
+        - date
+        - long_return
+        - short_return
+        - long_short_return
+        - cum_return  (cumulative long-short PnL)
+    """
+
+    rows = []
+
+    for dt, tmp in df.groupby(group_col):
+        tmp = tmp.dropna(subset=[signal_col, return_col])
+        if tmp.empty:
+            continue
+
+        sig = tmp[signal_col]
+        ret = tmp[return_col]
+
+        lo_th = sig.quantile(bottom_q)
+        hi_th = sig.quantile(1 - top_q)
+
+        long_mask = sig <= lo_th
+        short_mask = sig >= hi_th
+
+        if long_mask.sum() == 0 or short_mask.sum() == 0:
+            continue
+
+        long_ret = ret[long_mask].mean()
+        short_ret = ret[short_mask].mean()
+        ls_ret = long_ret - short_ret
+
+        rows.append(
+            {
+                group_col: dt,
+                "long_return": long_ret,
+                "short_return": short_ret,
+                "long_short_return": ls_ret,
+            }
+        )
+
+    if not rows:
+        return pd.DataFrame()
+
+    out = pd.DataFrame(rows).sort_values(group_col)
+    out["cum_return"] = (1 + out["long_short_return"]).cumprod()
+    return out
+
+
+def summarize_backtest(
+    bt: pd.DataFrame,
+    ret_col: str = "long_short_return",
+    periods_per_year: int = 12,
+):
+    """
+    Simple summary stats for the long-short strategy.
+
+    Returns a dict:
+        - mean_return
+        - vol
+        - sharpe
+        - hit_ratio
+        - num_periods
+    """
+    r = bt[ret_col].dropna()
+    if r.empty:
+        return {}
+
+    mean_ret = r.mean()
+    vol = r.std()
+    ann_ret = mean_ret * periods_per_year
+    ann_vol = vol * np.sqrt(periods_per_year)
+    sharpe = ann_ret / ann_vol if ann_vol > 0 else np.nan
+    hit_ratio = (r > 0).mean()
+
+    return {
+        "mean_return": mean_ret,
+        "vol": vol,
+        "annualized_return": ann_ret,
+        "annualized_vol": ann_vol,
+        "sharpe": sharpe,
+        "hit_ratio": hit_ratio,
+        "num_periods": len(r),
+    }

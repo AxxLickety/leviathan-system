@@ -1,0 +1,47 @@
+02_affordability_EDA.ipynb
+from src.loaders.housing_loader import load_housing_data
+from src.features.affordability import attach_affordability_features
+
+df = load_housing_data("austin")
+df2 = attach_affordability_features(df)
+df2.head()
+
+df2.plot(x="date", y="dti", figsize=(10,4), title="DTI Over Time")
+df2.plot(x="date", y="pti", figsize=(10,4), title="PTI Over Time")
+df2.plot(x="date", y="rent_burden", figsize=(10,4), title="Rent Burden")
+df2.plot(x="date", y="supply_pressure", figsize=(10,4), title="Supply Pressure")
+df2.plot(x="date", y="migration_pressure", figsize=(10,4), title="Migration Pressure")
+
+df2["dti"].hist(bins=20)
+df2["pti"].hist(bins=20)
+
+
+Affordability Factors – Economic Intuition
+
+DTI (Price / Income)
+High → region is expensive relative to income → vulnerability to correction.
+
+PTI (Mortgage Burden)
+High → households face monthly payment strain → more macro-sensitive.
+
+Rent Burden
+High → rental market tightness + affordability stress.
+
+Supply Pressure
+Low inventory + low permits → future supply constrained → supports prices.
+
+Migration Pressure
+Strong positive migration increases demand → upward pressure on prices.
+
+//
+Conclusion
+
+Austin exhibits (mock data):
+
+High DTI
+
+Positive migration pressure
+
+Tight supply
+
+→ Suggests structural vulnerability if macro conditions deteriorate.
