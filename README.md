@@ -10,9 +10,9 @@ Scope: IC diagnostics → regime breakdown → gating rule → tail validation �
 3. Logit/floor calibration: run_path_a.py + src/research/path_a/
 
 ## Phase memos (public HTML)
-- Phase II: PASTE_LINK_HERE
-- Phase III: PASTE_LINK_HERE
-- Phase I: PASTE_LINK_HERE
+- Phase II: https://axxlickety.github.io/leviathan-phase2-report/
+- Phase III: https://axxlickety.github.io/leviathan-phase3-deliverable/
+- Phase I: https://axxlickety.github.io/AxL_Leviathan_Mispricing_Model_DTI/
 
 ## Repo structure
 - src/: core framework (features, signals, evaluation, backtests, phase runners)
