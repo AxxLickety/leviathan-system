@@ -1,25 +1,32 @@
-# Leviathan — Regime-Aware Risk Gate (Phase I–IV)
+## Phase V–VII extension
 
-Status: Phase IV complete (Feb 2026)
-Thesis: Regime-conditional gating to reduce left-tail exposure under fragile affordability and credit conditions.
-Scope: IC diagnostics → regime breakdown → gating rule → tail validation → OOS checks. (Methodological research only.)
+Recent notebook-based extensions expand Leviathan beyond the original Phase I–IV public snapshot into a regime-aware housing risk prototype.
 
-## 5-minute tour (start here)
-1. Overview notebook: notebooks/00_readme/00_project_overview.ipynb
-2. Latest runner: src/phase4/run_phase4.py
-3. Logit/floor calibration: run_path_a.py + src/research/path_a/
+### Phase V — Affordability regime definition
+This phase tests whether affordability behaves like a **regime switch** rather than a continuous predictor.  
+Using DTI threshold behavior, the notebook identifies a fragile affordability regime in which forward housing downside risk rises sharply.
 
-## Phase memos (public HTML)
-- Phase II: https://axxlickety.github.io/leviathan-phase2-report/
-- Phase III: https://axxlickety.github.io/leviathan-phase3-deliverable/
-- Phase I: https://axxlickety.github.io/AxL_Leviathan_Mispricing_Model_DTI/
+Notebook:
+- `notebooks/phase5/phase5_regime_definition.ipynb`
 
-## Repo structure
-- src/: core framework (features, signals, evaluation, backtests, phase runners)
-- notebooks/: research notebooks (EDA + phase experiments)
-- scripts/: utilities (IC, rolling IC, backtests)
-- docs/: methodology and data notes
+### Phase VI — Affordability × supply interaction
+This phase evaluates whether supply expansion amplifies housing crash probability once the market has entered a fragile affordability regime.
 
-## Quick run
-pip install -r requirements.txt
-python src/phase4/run_phase4.py
+Key finding:
+- crash probability is negligible in stable affordability regimes
+- crash probability rises materially in fragile regimes
+- crash probability becomes most severe when fragile affordability coincides with supply expansion
+
+Notebook:
+- `notebooks/phase6/phase6_interaction_test.ipynb`
+
+### Phase VII — Risk overlay backtest
+This phase tests a simple regime-aware exposure rule:
+
+- remain invested in normal conditions
+- exit housing exposure when fragile affordability and supply expansion occur simultaneously
+
+The overlay reduces left-tail exposure and improves maximum drawdown relative to the baseline.
+
+Notebook:
+- `notebooks/phase7/phase7_affordability_overlay.ipynb`
