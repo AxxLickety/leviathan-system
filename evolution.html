@@ -2,68 +2,172 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leviathan — Research Evolution</title>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 800px;
-      margin: 40px auto;
-      line-height: 1.6;
-      color: #111;
+    :root {
+      --bg: #0b0f14;
+      --panel: #111823;
+      --text: #f3f6fb;
+      --muted: #a8b3c7;
+      --line: rgba(255,255,255,0.08);
+      --accent: #9ec5ff;
+      --accent2: #7ee2b8;
+      --max: 920px;
     }
-    h1 { font-size: 32px; }
-    h2 { margin-top: 30px; }
-    .stage { margin-bottom: 25px; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0b0f14 0%, #0e1420 100%);
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 48px 24px 72px;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      background: rgba(126, 226, 184, 0.08);
+      border: 1px solid rgba(126, 226, 184, 0.14);
+      border-radius: 999px;
+      padding: 7px 12px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      font-size: clamp(36px, 6vw, 64px);
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+      margin: 0 0 16px;
+    }
+    .sub {
+      font-size: 20px;
+      color: #dbe5f7;
+      max-width: 760px;
+      margin-bottom: 28px;
+    }
+    .hero {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 28px;
+      margin-bottom: 28px;
+    }
+    .panel {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 22px 22px 18px;
+      margin-bottom: 18px;
+    }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+    .quote {
+      font-size: 22px;
+      line-height: 1.45;
+      color: var(--text);
+      border-left: 4px solid var(--accent2);
+      padding-left: 16px;
+      margin: 22px 0 8px;
+    }
+    .small {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="eyebrow">Leviathan • Research Evolution</div>
+      <h1>What survived.</h1>
+      <div class="sub">
+        Leviathan began as a broader housing fragility hypothesis. After repeated out-of-sample testing,
+        robustness checks, adversarial worlds, and policy experiments, the model was reduced to its
+        only defensible core.
+      </div>
+      <div class="quote">
+        Leviathan is what remains after everything else failed.
+      </div>
+      <div class="small">
+        <a href="index.html">← Back to project overview</a>
+      </div>
+    </div>
 
-<h1>Leviathan — Research Evolution</h1>
+    <div class="panel">
+      <h2>1. Thesis</h2>
+      <p>
+        The original thesis was that housing downside risk might be jointly driven by macro regime
+        and affordability stress.
+      </p>
+    </div>
 
-<p>This page shows how the Leviathan model was gradually simplified through falsification and testing.</p>
+    <div class="panel">
+      <h2>2. What failed</h2>
+      <p>
+        DTI-based signals did not survive fairness and robustness testing. Absolute DTI failed under drift,
+        rolling-percentile DTI failed under cleaner definitions, and even causal joint-trigger worlds did not
+        produce stable incremental value beyond regime.
+      </p>
+    </div>
 
-<div class="stage">
-<h2>1. Initial Hypothesis</h2>
-<p>Affordability (DTI) + macro regime jointly determine downside risk.</p>
-</div>
+    <div class="panel">
+      <h2>3. What survived</h2>
+      <p>
+        A regime-only overlay repeatedly improved downside outcomes across single-market, multi-market,
+        adversarial, and positive-drift synthetic worlds. The signal that remained was simple:
+        reduce exposure under adverse macro conditions.
+      </p>
+    </div>
 
-<div class="stage">
-<h2>2. Early Signal</h2>
-<p>DTI appeared predictive in initial synthetic tests.</p>
-</div>
+    <div class="panel">
+      <h2>4. What that means</h2>
+      <p>
+        Leviathan is not a return-prediction engine and not a standalone alpha model.
+        It is best understood as a downside-risk overlay: a tool that trades some upside participation
+        for more stable left-tail protection.
+      </p>
+    </div>
 
-<div class="stage">
-<h2>3. Stress Testing</h2>
-<p>Percentile DTI, drift sensitivity, and robustness checks weakened the signal.</p>
-</div>
+    <div class="panel">
+      <h2>5. Why it matters</h2>
+      <p>
+        The final model is intentionally narrow, auditable, and configurable. It answers a practical
+        portfolio question: when does staying fully exposed become a bad bet?
+      </p>
+    </div>
 
-<div class="stage">
-<h2>4. Joint Trigger World</h2>
-<p>DTI failed to add stable incremental value beyond regime.</p>
-</div>
-
-<div class="stage">
-<h2>5. Model Collapse</h2>
-<p>DTI removed. Model reduced to regime-only.</p>
-</div>
-
-<div class="stage">
-<h2>6. Multi-Market Validation</h2>
-<p>Result holds across multiple synthetic markets.</p>
-</div>
-
-<div class="stage">
-<h2>7. Adversarial + Positive Drift</h2>
-<p>Tradeoff becomes clear: downside protection vs upside cost.</p>
-</div>
-
-<div class="stage">
-<h2>8. Policy Layer</h2>
-<p>Model becomes a configurable overlay instead of a fixed rule.</p>
-</div>
-
-<h2>Final Insight</h2>
-<p><strong>Leviathan is what remains after everything else failed.</strong></p>
-
+    <div class="footer">
+      Final model form: <strong>mandate-aware regime risk overlay</strong><br>
+      Default policy: <strong>50% de-risk after 2 consecutive adverse quarters</strong>
+    </div>
+  </div>
 </body>
 </html>
