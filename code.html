@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leviathan Codebase Guide</title>
+  <style>
+    :root{
+      --bg:#0a1020; --panel:#121a31; --panel2:#182342; --text:#eef3ff; --muted:#aab4d6;
+      --accent:#8ab4ff; --accent2:#7ef0c5; --line:rgba(255,255,255,.10); --max:1080px;
+      --shadow:0 18px 48px rgba(0,0,0,.28);
+    }
+    *{box-sizing:border-box} body{margin:0;background:
+      radial-gradient(1000px 600px at 10% -10%, rgba(126,240,197,.08), transparent 50%),
+      radial-gradient(900px 500px at 100% 0%, rgba(138,180,255,.14), transparent 45%),
+      linear-gradient(180deg,#0a1020,#0d1427); color:var(--text);
+      font:16px/1.6 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+    .wrap{max-width:var(--max); margin:auto; padding:28px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow)}
+    .hero{padding:34px}
+    .eyebrow{display:inline-block; padding:8px 12px; border-radius:999px; background:rgba(138,180,255,.10);
+      border:1px solid rgba(138,180,255,.20); color:#dbe7ff; font-weight:700; font-size:13px}
+    h1{font-size:clamp(36px,6vw,62px); line-height:1.02; margin:16px 0 10px; letter-spacing:-.03em}
+    h2{font-size:28px; margin:28px 0 10px; letter-spacing:-.02em}
+    h3{margin:0 0 8px; font-size:20px}
+    p{margin:0 0 12px} .muted{color:var(--muted)}
+    .grid{display:grid; gap:18px} .two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .panel{padding:22px}
+    .pill{display:inline-block; padding:6px 10px; border-radius:999px; font-size:13px; font-weight:700;
+      background:rgba(126,240,197,.10); border:1px solid rgba(126,240,197,.18); color:#dbfff2; margin:0 8px 8px 0}
+    .code{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space:pre; overflow:auto;
+      background:#091126; border:1px solid var(--line); border-radius:18px; padding:16px; line-height:1.65}
+    ul{margin:10px 0 0; padding-left:20px} li{margin:8px 0}
+    .footer{padding:22px 0 6px; color:var(--muted); font-size:14px}
+    @media (max-width:900px){.two,.three{grid-template-columns:1fr}.wrap{padding:18px}.hero,.panel{padding:20px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card hero">
+      <div class="eyebrow">Leviathan • Codebase Guide</div>
+      <h1>How the repo is organized</h1>
+      <p class="muted">
+        Leviathan is built as a research-first system: synthetic world generation, OOS evaluation, robustness checks,
+        and policy design are kept separate so the logic stays auditable.
+      </p>
+      <div style="margin-top:14px">
+        <span class="pill">OOS-first</span>
+        <span class="pill">Parallel experiment namespaces</span>
+        <span class="pill">Memo-driven research</span>
+        <span class="pill">Auditable modules</span>
+      </div>
+    </div>
+
+    <h2>Repository map</h2>
+    <div class="card panel">
+      <div class="code">scripts/
+  oos_train.py                          # original OOS training pipeline
+  oos_eval.py                           # original OOS evaluation pipeline
+  oos_train_pct.py / oos_eval_pct.py    # percentile-native DTI experiments
+  oos_regime_only.py                    # regime-only overlay evaluation
+  oos_regime_multimarket*.py            # multi-market / adversarial / pos-drift tests
+  oos_regime_policy_experiment.py       # activation-policy comparison
+
+src/
+  evaluation/
+    transforms.py                       # rolling percentile transforms and utilities
+    oos_helpers.py                      # OOS helper functions
+  research/path_a/
+    build_dataset.py                    # baseline synthetic generator
+    build_multimarket_*.py              # multi-market synthetic world generators
+
+docs/
+  PHASE_OOS_DESIGN.md                   # pre-registered OOS design
+  OOS_*.md                              # experiment memos, robustness notes, conclusions
+  LEVIATHAN_V1.md                       # final model definition
+
+outputs/
+  oos_*/                                # experiment-specific outputs, tables, plots, verdicts</div>
+    </div>
+
+    <h2>Code philosophy</h2>
+    <div class="grid three">
+      <div class="card panel">
+        <h3>1. Separate signal from policy</h3>
+        <p class="muted">The regime signal and the overlay activation policy are treated as different questions, so signal validity is not confused with deployment style.</p>
+      </div>
+      <div class="card panel">
+        <h3>2. Prefer parallel experiments</h3>
+        <p class="muted">New worlds and new hypotheses live in new scripts and output folders instead of mutating the original pipeline in place.</p>
+      </div>
+      <div class="card panel">
+        <h3>3. Keep the story falsifiable</h3>
+        <p class="muted">DTI was repeatedly stress-tested and removed from the core model once it failed to add stable incremental value.</p>
+      </div>
+    </div>
+
+    <h2>How to read the project</h2>
+    <div class="grid two">
+      <div class="card panel">
+        <h3>Start here</h3>
+        <ul>
+          <li><strong>README</strong> for the project summary</li>
+          <li><strong>docs/LEVIATHAN_V1.md</strong> for the final model definition</li>
+          <li><strong>docs/PHASE_OOS_DESIGN.md</strong> for the OOS logic</li>
+        </ul>
+      </div>
+      <div class="card panel">
+        <h3>Then trace the evolution</h3>
+        <ul>
+          <li><strong>OOS_BASELINE / ROBUSTNESS</strong> → first converged results</li>
+          <li><strong>JOINT_TRIGGER / REGIME_ONLY</strong> → DTI rejection and core-model shrinkage</li>
+          <li><strong>MULTIMARKET / ADVERSARIAL / POSDRIFT / POLICY</strong> → generalization and deployment framing</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>What survives in the codebase</h2>
+    <div class="card panel">
+      <p>
+        The final defensible core is intentionally small:
+      </p>
+      <div class="code">Signal: adverse macro regime
+Action: reduce exposure
+Default policy: 50% de-risk after 2 consecutive adverse quarters</div>
+      <p class="muted" style="margin-top:12px">
+        Everything else in the repo shows how that conclusion was earned: through OOS testing, failed branches, harsher synthetic worlds, and policy trade-off analysis.
+      </p>
+    </div>
+
+    <div class="footer">This page is meant as a code walkthrough for readers who want to understand how Leviathan is built, not just what the final model claims.</div>
+  </div>
+</body>
+</html>
