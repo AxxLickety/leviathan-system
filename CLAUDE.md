@@ -141,3 +141,49 @@ All imports use absolute paths from `src.` (e.g., `from src.loaders.fred import 
 - **Research Focus**: This is a research prototype, not production code. Emphasis is on reproducibility and clarity of findings rather than optimization.
 - **Geographic Scope**: Currently limited to Austin and Toronto (Phase 1 & 2 evaluation universe)
 - **Primary Contribution**: The decision layer work (Phases 9-10) represents the main research contribution, showing that macro-aware gating improves decision stability versus traditional return-seeking approaches.
+
+## Core System Conventions
+
+These definitions are canonical. All new code must follow them. Existing notebooks
+predate some of these conventions and may use older patterns (see notes below).
+
+### Regime
+
+- **Operational regime**: `assign_fragility_regime()` in `src/evaluation/regime.py`
+  - Input: `real_rate` column (real interest rate level)
+  - Formula: `(real_rate < threshold).astype(int)`, default `threshold=0.0`
+  - Encoding: **integer** — `1` when `real_rate < 0` (negative real rates); `0` when `real_rate >= 0`
+  - `REGIME_FOR_RISK = 0` throughout scripts; `affordability_active = (regime == 0)` in pipeline
+  - Ex-ante: observable at decision time, no look-ahead bias
+  - `assign_fragility_regime()` is the canonical definition; `src/core/pipeline.py` calls it directly
+  - Path A (`src/research/path_a/build_dataset.py`) keeps an equivalent inline implementation
+    (`(real_rate < 0).astype(int)`) to avoid dependency coupling — intentional, not an inconsistency
+- **Diagnostic regime**: `assign_directional_regime()` in `src/evaluation/regime.py`
+  - Input: realized forward return sign
+  - Encoding: string `"up"` / `"down"`
+  - Ex-post: contains look-ahead bias — for historical attribution and IC decomposition only
+  - **Must not be used in decision logic or backtest filters**
+- **Deprecated alias**: `assign_regime()` — calls `assign_directional_regime`, emits
+  `DeprecationWarning`. Exists only for backward compatibility with existing notebooks.
+
+### Forward Return
+
+- **Definition**: 4-quarter log return — `log(p[t+4]) - log(p[t])`
+- **Horizon**: 4 quarters = 1 year on quarterly data
+- **Formula**: log difference (not arithmetic percent change)
+- **Column name**: `"fwd_return"` in pipeline context (`src/core/pipeline.py`, notebooks);
+  `"fwd_ret_4q"` in scripts (`scripts/`)
+- **Authoritative implementation**: `compute_forward_return()` in `src/evaluation/backtest.py`
+- Note: `"ret_1q_fwd"` in `scripts/phase2_backtest.py` is a separate 1-quarter return
+  used for strategy simulation — intentionally different, not an error
+
+### Performance Metrics
+
+- **Canonical module**: `src/backtests/evaluation.py`
+- **`sharpe(x)`**: `mean / std` using `ddof=1` (sample standard deviation)
+- **`max_drawdown(log_r)`**: equity-curve drawdown — converts log returns to price levels
+  via `exp(cumsum)`, then computes peak-to-trough ratio
+- **`summarize(x, name="")`**: standard summary interface returning:
+  `name, n, mean, vol, sharpe, p05, p50, p95, min, max, maxdd`
+- All scripts in `scripts/` import from this module. Do not define inline metric
+  functions in new scripts.
