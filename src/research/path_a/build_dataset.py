@@ -17,6 +17,8 @@ def build_master_df(
     cycle = 1.5 * np.sin(np.linspace(0, 8 * np.pi, n))
     shocks = rng.normal(0, 0.6, size=n)
     real_rate = cycle + shocks
+    # Fragility regime: matches assign_fragility_regime() in src/evaluation/regime.py
+    # (default threshold=0.0). Kept inline to avoid dependency coupling in Path A.
     regime = (real_rate < 0).astype(int)
 
     trend = np.linspace(85, 135, n)
