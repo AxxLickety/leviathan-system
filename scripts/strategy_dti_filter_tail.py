@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from src.backtests.evaluation import summarize
 
 INFILE = "outputs/path_a/master.csv"
 OUTDIR = "outputs/strategy_filter"
@@ -50,18 +51,8 @@ eval_df["baseline_ret"] = eval_df["fwd_ret_4q"]
 eval_df = eval_df.dropna(subset=["strategy_ret"]).reset_index(drop=True)
 
 summary = pd.DataFrame([
-    {
-        "name": "baseline",
-        "mean": eval_df["baseline_ret"].mean(),
-        "std": eval_df["baseline_ret"].std(ddof=0),
-        "p05": eval_df["baseline_ret"].quantile(0.05),
-    },
-    {
-        "name": "tail_filter",
-        "mean": eval_df["strategy_ret"].mean(),
-        "std": eval_df["strategy_ret"].std(ddof=0),
-        "p05": eval_df["strategy_ret"].quantile(0.05),
-    },
+    summarize(eval_df["baseline_ret"], "baseline"),
+    summarize(eval_df["strategy_ret"], "tail_filter"),
 ])
 
 summary.to_csv(f"{OUTDIR}/summary_tail.csv", index=False)

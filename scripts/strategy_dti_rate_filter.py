@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from src.backtests.evaluation import summarize
 
 INFILE = "outputs/path_a/master.csv"
 OUTDIR = "outputs/strategy_filter"
@@ -29,19 +30,8 @@ def apply_filter(sub: pd.DataFrame, dti_thr: float, dr_thr: float) -> pd.Series:
     hold = ~exit_mask
     return sub["fwd_ret_4q"] * hold.astype(float)
 
-def p05(x: pd.Series) -> float:
+def p05(x: pd.Series) -> float:        # kept: used as walk-forward objective
     return x.dropna().quantile(0.05)
-
-def summarize(x: pd.Series, name: str) -> dict:
-    x = x.dropna()
-    return {
-        "name": name,
-        "n": len(x),
-        "mean": float(x.mean()),
-        "std": float(x.std(ddof=0)),
-        "p05": float(x.quantile(0.05)),
-        "min": float(x.min()),
-    }
 
 # walk-forward expanding selection (maximize p05 on train)
 strat_ret = pd.Series(index=df.index, dtype=float)

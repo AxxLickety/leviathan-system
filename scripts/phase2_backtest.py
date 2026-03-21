@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import yaml
+from src.backtests.evaluation import summarize
 
 SANITY = "outputs/phase2/phase2_sanity.csv"
 THRESH = "outputs/path_a/thresholds.csv"
@@ -20,31 +21,6 @@ def load_threshold() -> float:
     sub2["prob_dist"] = (sub2["prob"] - PROB_FOR_THRESHOLD).abs()
     sub2 = sub2.sort_values("prob_dist").head(1)
     return float(sub2["dti_threshold"].iloc[0])
-
-def max_drawdown(log_r: pd.Series) -> float:
-    x = log_r.dropna()
-    if len(x) == 0:
-        return np.nan
-    eq = np.exp(x.cumsum())
-    peak = np.maximum.accumulate(eq)
-    dd = (eq / peak) - 1.0
-    return float(dd.min())
-
-def summarize_strategy(log_r: pd.Series) -> dict:
-    x = log_r.dropna()
-    if len(x) == 0:
-        return {"n": 0, "mean": np.nan, "vol": np.nan, "sharpe": np.nan, "p05": np.nan, "maxdd": np.nan}
-    mean = x.mean()
-    vol = x.std(ddof=1)
-    sharpe = mean / vol if vol > 0 else np.nan
-    return {
-        "n": int(len(x)),
-        "mean": float(mean),
-        "vol": float(vol),
-        "sharpe": float(sharpe),
-        "p05": float(x.quantile(0.05)),
-        "maxdd": max_drawdown(x),
-    }
 
 def main():
     df = pd.read_csv(SANITY, parse_dates=["date"]).sort_values("date").reset_index(drop=True)
@@ -81,10 +57,10 @@ def main():
 
     # Summaries
     res = pd.DataFrame([
-        {"strategy":"baseline_always_in", **summarize_strategy(df["ret_1q_fwd"])},
-        {"strategy":"phase1_gate", **summarize_strategy(df["strat_p1"])},
-        {"strategy":"phase2_gate", **summarize_strategy(df["strat_p2"])},
-    ])
+        summarize(df["ret_1q_fwd"], "baseline_always_in"),
+        summarize(df["strat_p1"],   "phase1_gate"),
+        summarize(df["strat_p2"],   "phase2_gate"),
+    ]).rename(columns={"name": "strategy"})
     print(res.to_string(index=False))
 
     res.to_csv("outputs/phase2/phase2_strategy_summary.csv", index=False)

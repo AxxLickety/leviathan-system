@@ -1,6 +1,7 @@
 from __future__ import annotations
 import numpy as np
 import pandas as pd
+from src.backtests.evaluation import summarize
 
 SANITY = "outputs/phase2/phase2_sanity.csv"
 THRESH = "outputs/path_a/thresholds.csv"
@@ -28,17 +29,6 @@ def load_threshold() -> float | None:
 
     return None
 
-def summarize(x: pd.Series) -> dict:
-    x = x.dropna()
-    if len(x) == 0:
-        return {"n": 0, "mean": np.nan, "vol": np.nan, "p05": np.nan}
-    return {
-        "n": int(len(x)),
-        "mean": float(x.mean()),
-        "vol": float(x.std(ddof=1)),
-        "p05": float(x.quantile(0.05)),
-    }
-
 def main():
     df = pd.read_csv(SANITY, parse_dates=["date"]).sort_values("date")
 
@@ -60,16 +50,16 @@ def main():
 
     r = df["fwd_ret_4q"]
 
-    out = []
-    out.append(("baseline_all", summarize(r)))
-    out.append(("phase1_invested", summarize(r[invested_p1])))
-    out.append(("phase2_invested", summarize(r[invested_p2])))
-    out.append(("phase1_risk_bucket", summarize(r[phase1_risk])))
-    out.append(("phase2_risk_bucket", summarize(r[phase2_risk])))
-
     rows = []
-    for name, stats in out:
-        rows.append({"bucket": name, **stats})
+    for label, series in [
+        ("baseline_all",       r),
+        ("phase1_invested",    r[invested_p1]),
+        ("phase2_invested",    r[invested_p2]),
+        ("phase1_risk_bucket", r[phase1_risk]),
+        ("phase2_risk_bucket", r[phase2_risk]),
+    ]:
+        stats = summarize(series)
+        rows.append({"bucket": label, **{k: v for k, v in stats.items() if k != "name"}})
 
     res = pd.DataFrame(rows)
     print(res.to_string(index=False))

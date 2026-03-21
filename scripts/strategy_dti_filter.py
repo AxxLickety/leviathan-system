@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from src.backtests.evaluation import sharpe, summarize
 
 INFILE = "outputs/path_a/master.csv"
 OUTDIR = "outputs/strategy_filter"
@@ -21,12 +22,6 @@ def apply_filter(sub: pd.DataFrame, thr: float) -> pd.Series:
     """Return strategy return series given threshold thr."""
     hold = ~((sub["regime"] == 0) & (sub["dti"] > thr))
     return sub["fwd_ret_4q"] * hold.astype(float)
-
-def sharpe(x: pd.Series) -> float:
-    x = x.dropna()
-    if x.std(ddof=0) == 0:
-        return np.nan
-    return x.mean() / x.std(ddof=0)
 
 rows = []
 thr_chosen = []
@@ -69,22 +64,6 @@ eval_df["baseline_ret"] = eval_df["fwd_ret_4q"]
 
 # only evaluate where strategy_ret exists
 eval_df = eval_df.dropna(subset=["strategy_ret"]).reset_index(drop=True)
-
-# summary stats
-def summarize(x: pd.Series, name: str) -> dict:
-    x = x.dropna()
-    return {
-        "name": name,
-        "n": len(x),
-        "mean": x.mean(),
-        "std": x.std(ddof=0),
-        "sharpe": sharpe(x),
-        "min": x.min(),
-        "p05": x.quantile(0.05),
-        "p50": x.quantile(0.50),
-        "p95": x.quantile(0.95),
-        "max": x.max(),
-    }
 
 sum_baseline = summarize(eval_df["baseline_ret"], "baseline_hold")
 sum_strat = summarize(eval_df["strategy_ret"], "filter_strategy")
