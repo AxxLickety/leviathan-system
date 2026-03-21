@@ -9,6 +9,27 @@ import pandas as pd
 # ---------------------------------------------------------------------------
 _LABEL_HORIZON = 20
 
+# ---------------------------------------------------------------------------
+# Joint-trigger crash parameters
+# ---------------------------------------------------------------------------
+_ROLL_W        = 20      # quarters for rolling percentile rank (inline, no import)
+_JOINT_THRESH  = 0.65    # dti_pct_roll > this qualifies for joint trigger
+_JOINT_PROB    = 0.45    # per-eligible-row trigger probability
+_JOINT_DUR_MIN = 3
+_JOINT_DUR_MAX = 4
+_JOINT_SHOCK_LO = 0.070
+_JOINT_SHOCK_HI = 0.090
+
+# Background noise crash params
+_BG_PROB      = 0.03
+_BG_DUR_MIN   = 2
+_BG_DUR_MAX   = 3
+_BG_SHOCK_LO  = 0.020
+_BG_SHOCK_HI  = 0.040
+
+# GFC structural crash params
+_GFC_SHOCK    = 0.065
+
 
 def build_master_df(
     *,
@@ -44,49 +65,48 @@ def build_master_df(
     noise = rng.normal(0, 0.01, size=n)
 
     # ==================================================================
-    # Fragility-driven crash mechanism
+    # Inline rolling percentile rank of DTI
+    # (Do NOT import from src/evaluation/transforms.py — keep Path A
+    #  dependency-free per CLAUDE.md)
+    # ==================================================================
+    dti_arr = dti  # numpy array
+    dti_pct_roll = np.empty(n)
+    for t in range(n):
+        start_w = max(0, t - _ROLL_W + 1)
+        seg = dti_arr[start_w : t + 1]
+        dti_pct_roll[t] = np.sum(seg <= dti_arr[t]) / len(seg)
+
+    # ==================================================================
+    # Crash mechanism — joint-trigger design
     # ==================================================================
     #
     # Economic motivation
     # -------------------
-    # Accommodative monetary policy (regime=1, negative real rates) enables
-    # borrowers to over-extend (high DTI).  When conditions normalize to
-    # positive real rates (regime=0), stretched borrowers face refinancing
-    # stress and forced deleveraging, triggering price corrections.
+    # The primary crash mechanism is triggered when BOTH:
+    #   (a) monetary policy is restrictive (regime==0, positive real rates)
+    #   (b) affordability is stretched relative to recent history
+    #       (dti_pct_roll > _JOINT_THRESH)
     #
-    # Crash placement: date-anchored (not proportional to dataset length)
-    # -------------------------------------------------------------------
-    # All deterministic crashes are placed at fixed calendar dates so that
-    # extending the dataset backward does not shift the crash calendar.
-    # This preserves the train/test boundary semantics and keeps crash
-    # density stable regardless of start date.
+    # This joint condition captures the scenario where stretched borrowers
+    # face refinancing stress as monetary conditions tighten, triggering
+    # forced deleveraging and price corrections.
     #
     # Layers
     # ------
-    # Layer 1a — Early training crash (~1996-Q2)
-    #   Represents a mid-1990s housing stress episode.  Creates ~12 positive
-    #   labels in the early part of the training window (rows ~7-18).
-    #   Depth: -0.055/qtr × 4q = −0.22 total (moderate; ~20% price drop).
+    # Layer A — Structural GFC crash (secondary, calendar-anchored)
+    #   Fixed at 2007-Q1 through 2009-Q1.  Represents the 2008 financial
+    #   crisis.  Straddles the train/test boundary.
+    #   Depth: -0.065/qtr × ~8q = −0.52 total (~40% peak-to-trough).
     #
-    # Layer 1b — Pre-GFC training crash (~2005-Q1)
-    #   Represents the 2004-2005 affordability stress event.  Creates ~11
-    #   positive labels in the late training window (rows ~33-43).
-    #   Depth: -0.075/qtr × 4q = −0.30 total (~26% price drop).
+    # Layer B — Background noise crashes (minor, any period)
+    #   Per-quarter probability: 3%.  Duration 2-3q, depth −0.02–0.04/qtr.
+    #   Mostly too small to generate y=1 labels.
     #
-    # Layer 2 — GFC-proxy crash (~2007-Q1 → ~2009-Q1)
-    #   Straddles the training/test boundary.  Provides a structural 2-year
-    #   downward episode mirroring the 2008 financial crisis.
-    #   Depth: -0.065/qtr × 8q = −0.52 total (~40% peak-to-trough).
-    #
-    # Layer 3 — Post-GFC test crash (~2016-Q1)
-    #   Ensures the test period contains a crash episode visible to
-    #   add_correction_label, so crash_frequency_table has nonzero cells.
-    #   Depth: -0.075/qtr × 4q = −0.30 total (~26% price drop).
-    #
-    # Layer 4 — Probabilistic fragility-driven crashes (full sample)
-    #   Eligible: regime==0 AND dti > p75(dti).  Trigger probability: 30%.
-    #   Duration 3-4q, depth −0.065 to −0.085/qtr.  Expanding suppression
-    #   window prevents overlapping with deterministic events.
+    # Layer C — Joint trigger crashes (PRIMARY)
+    #   Eligibility: regime==0 AND dti_pct_roll > _JOINT_THRESH
+    #   Per-eligible-row trigger probability: _JOINT_PROB (0.45)
+    #   Duration 3-4q, depth −0.070–0.090/qtr.
+    #   These are the main crash generator for the research signal.
     # ==================================================================
 
     crash = np.zeros(n)
@@ -104,89 +124,51 @@ def build_master_df(
         assert 0 <= idx < n, f"Date {date_str} out of panel range"
         return idx
 
-    # --- Layer 1a: Early training crash (~1996-Q2) ---
-    # row 17; trough at row 21; y=1 for training rows ~7-18
-    _L1A_START = _row("1996-06-30")
-    _L1A_DUR   = 4
-    _L1A_SHOCK = 0.055
-    assert _L1A_START + _L1A_DUR <= train_end_idx, (
-        "Layer 1a crash must complete within training window"
-    )
-    for q in range(_L1A_DUR):
-        crash[_L1A_START + q] -= _L1A_SHOCK
-    l1a_event = (_L1A_START, _L1A_DUR, _L1A_SHOCK)
-
-    # --- Layer 1b: Pre-GFC training crash (~2005-Q1) ---
-    # row 52; trough at row 56; y=1 for training rows ~33-43
-    _L1B_START = _row("2005-03-31")
-    _L1B_DUR   = 4
-    _L1B_SHOCK = 0.090   # 0.090 vs 0.075: extra margin overcomes regime-1 appreciation
-                         # in rows 37-56 (7 quarters at base=0.012 vs 0.008)
-    assert _L1B_START + _L1B_DUR <= train_end_idx, (
-        "Layer 1b crash must complete within training window"
-    )
-    assert _L1B_START + _L1B_DUR <= _last_labeled + _LABEL_HORIZON, (
-        "Layer 1b trough must be visible from at least one labeled training row"
-    )
-    for q in range(_L1B_DUR):
-        crash[_L1B_START + q] -= _L1B_SHOCK
-    l1b_event = (_L1B_START, _L1B_DUR, _L1B_SHOCK)
-
-    # --- Layer 2: GFC-proxy crash (straddles train/test boundary) ---
-    # rows 60-67 (2007-Q1 through 2008-Q4); spans train_end_idx=63
-    _L2_START = _row("2007-03-31")
-    _L2_END   = _row("2009-03-31")    # exclusive upper bound for slice
-    _L2_SHOCK = 0.065
-    assert _L2_START <= train_end_idx < _L2_END, (
+    # --- Layer A: Structural GFC crash (calendar-anchored) ---
+    _GFC_START = _row("2007-03-31")
+    _GFC_END   = _row("2009-03-31")    # exclusive upper bound for slice
+    assert _GFC_START <= train_end_idx < _GFC_END, (
         "GFC crash must straddle the training/test boundary"
     )
-    crash[_L2_START:_L2_END] = -_L2_SHOCK
-    l2_event = (_L2_START, _L2_END - _L2_START, _L2_SHOCK)
+    crash[_GFC_START:_GFC_END] = -_GFC_SHOCK
+    gfc_event = (_GFC_START, _GFC_END - _GFC_START, _GFC_SHOCK, "structural_gfc")
 
-    # --- Layer 3: Post-GFC test crash (~2016-Q1) ---
-    # row 96; trough at row 100; produces ~20 positive test labels
-    _L3_START = _row("2016-03-31")
-    _L3_DUR   = 4
-    _L3_SHOCK = 0.075
-    assert _L3_START > train_end_idx, (
-        "Post-GFC test crash must be in test period"
-    )
-    for q in range(_L3_DUR):
-        if _L3_START + q < n:
-            crash[_L3_START + q] -= _L3_SHOCK
-    l3_event = (_L3_START, _L3_DUR, _L3_SHOCK)
+    # --- GFC suppress set: ±2 buffer around GFC crash ---
+    gfc_suppress: set[int] = set(range(_GFC_START - 2, _GFC_END + 2 + 1))
 
-    # --- Layer 4: Probabilistic fragility-driven crashes ---
-    _FRAG_PROB    = 0.30
-    _PROB_DUR_MIN = 3
-    _PROB_DUR_MAX = 4
-    _SHOCK_LO     = 0.065
-    _SHOCK_HI     = 0.085
-
-    dti_p75 = float(np.percentile(dti, 75))
-    fragile = (regime == 0) & (dti > dti_p75)
-
-    # Suppress probabilistic triggers near deterministic events (±1 buffer)
-    _det_suppress: set[int] = set()
-    for s, d, _ in [l1a_event, l1b_event, l2_event, l3_event]:
-        for q in range(d + 2):
-            _det_suppress.add(s - 1 + q)
-            _det_suppress.add(s + q)
+    # --- Layers B & C: probabilistic crash loop ---
+    # Joint trigger eligibility
+    joint_eligible = (regime == 0) & (dti_pct_roll > _JOINT_THRESH)
 
     active_until = -1
-    prob_events: list[tuple[int, int, float]] = []
+    prob_events: list[tuple[int, int, float, str]] = []
 
     for t in range(n):
-        if t <= active_until or t in _det_suppress:
+        if t <= active_until:
             continue
-        if fragile[t] and rng.random() < _FRAG_PROB:
-            dur   = int(rng.integers(_PROB_DUR_MIN, _PROB_DUR_MAX + 1))
-            shock = float(rng.uniform(_SHOCK_LO, _SHOCK_HI))
+        if t in gfc_suppress:
+            continue
+
+        # Layer C — Joint trigger (primary): checked first
+        if joint_eligible[t] and rng.random() < _JOINT_PROB:
+            dur   = int(rng.integers(_JOINT_DUR_MIN, _JOINT_DUR_MAX + 1))
+            shock = float(rng.uniform(_JOINT_SHOCK_LO, _JOINT_SHOCK_HI))
             for q in range(dur):
                 if t + q < n:
                     crash[t + q] -= shock
             active_until = t + dur - 1
-            prob_events.append((t, dur, shock))
+            prob_events.append((t, dur, shock, "joint_trigger"))
+            continue
+
+        # Layer B — Background noise (minor)
+        if rng.random() < _BG_PROB:
+            dur   = int(rng.integers(_BG_DUR_MIN, _BG_DUR_MAX + 1))
+            shock = float(rng.uniform(_BG_SHOCK_LO, _BG_SHOCK_HI))
+            for q in range(dur):
+                if t + q < n:
+                    crash[t + q] -= shock
+            active_until = t + dur - 1
+            prob_events.append((t, dur, shock, "background"))
 
     # ------------------------------------------------------------------
     # Assemble returns and price index
@@ -198,8 +180,10 @@ def build_master_df(
     # ------------------------------------------------------------------
     # Diagnostics
     # ------------------------------------------------------------------
-    all_events = [l1a_event, l1b_event, l2_event, l3_event] + prob_events
-    _print_crash_diagnostics(dates, all_events, train_end_idx, dti, real_price_index)
+    all_events = [gfc_event] + prob_events
+    _print_crash_diagnostics(
+        dates, all_events, train_end_idx, dti, dti_pct_roll, regime, real_price_index
+    )
 
     return pd.DataFrame(
         {
@@ -214,33 +198,65 @@ def build_master_df(
 
 def _print_crash_diagnostics(
     dates: pd.DatetimeIndex,
-    events: list[tuple[int, int, float]],
+    events: list[tuple[int, int, float, str]],
     train_end_idx: int,
     dti: np.ndarray,
+    dti_pct_roll: np.ndarray,
+    regime: np.ndarray,
     real_price_index: np.ndarray,
 ) -> None:
     """Print crash generation diagnostics at dataset build time."""
     n_total = len(events)
-    n_train = sum(1 for (c, _, _) in events if c <= train_end_idx)
+
+    # Breakdown by layer
+    layer_counts: dict[str, int] = {}
+    for _, _, _, layer in events:
+        layer_counts[layer] = layer_counts.get(layer, 0) + 1
+
+    n_train = sum(1 for (c, _, _, _) in events if c <= train_end_idx)
     n_test  = n_total - n_train
 
-    dti_at_starts = [dti[c] for (c, _, _) in events if c < len(dti)]
+    dti_pct_at_starts = [dti_pct_roll[c] for (c, _, _, _) in events if c < len(dti_pct_roll)]
+
+    # Joint trigger diagnostics
+    jt_events = [(c, d, s, l) for (c, d, s, l) in events if l == "joint_trigger"]
+    jt_regime0_frac = (
+        sum(1 for (c, _, _, _) in jt_events if regime[c] == 0) / len(jt_events)
+        if jt_events else float("nan")
+    )
+    jt_pct_frac = (
+        sum(1 for (c, _, _, _) in jt_events if dti_pct_roll[c] > 0.65) / len(jt_events)
+        if jt_events else float("nan")
+    )
 
     print("[build_master_df] Crash diagnostics:")
     print(f"  Panel rows           : {len(dates)}  "
           f"({dates[0].date()} – {dates[-1].date()})")
     print(f"  Total crash events   : {n_total}")
+    print(f"  By layer             : "
+          f"structural_gfc={layer_counts.get('structural_gfc', 0)}  "
+          f"joint_trigger={layer_counts.get('joint_trigger', 0)}  "
+          f"background={layer_counts.get('background', 0)}")
     print(f"  In training window   : {n_train}  (start <= {dates[train_end_idx].date()})")
     print(f"  In test window       : {n_test}")
-    if dti_at_starts:
-        dti_sorted = sorted(dti_at_starts)
-        print(f"  DTI at crash starts  : "
-              f"min={dti_sorted[0]:.1f}  "
-              f"median={dti_sorted[len(dti_sorted)//2]:.1f}  "
-              f"max={dti_sorted[-1]:.1f}")
-    print("  Event detail (start_row, date, dur, shock/qtr, total):")
-    for c, dur, shock in sorted(events):
+
+    if jt_events:
+        print(f"  Joint trigger stats  : "
+              f"regime==0 frac={jt_regime0_frac:.2f}  "
+              f"pct>0.65 frac={jt_pct_frac:.2f}")
+
+    if dti_pct_at_starts:
+        dti_sorted = sorted(dti_pct_at_starts)
+        print(f"  dti_pct_roll at crash starts: "
+              f"min={dti_sorted[0]:.3f}  "
+              f"median={dti_sorted[len(dti_sorted)//2]:.3f}  "
+              f"max={dti_sorted[-1]:.3f}")
+
+    print("  Note: Primary crash trigger = regime==0 AND dti_pct_roll > 0.65")
+    print("  Event detail (start_row, date, dur, shock/qtr, total, layer, split):")
+    for c, dur, shock, layer in sorted(events, key=lambda e: e[0]):
         split    = "TRAIN" if c <= train_end_idx else "TEST"
         date_str = str(dates[c].date()) if c < len(dates) else "OOB"
         print(f"    row {c:3d}  {date_str}  dur={dur}q  "
-              f"shock={shock:.3f}/qtr  total={dur*shock:.3f}  [{split}]")
+              f"shock={shock:.3f}/qtr  total={dur*shock:.3f}  "
+              f"[{layer}]  [{split}]")
