@@ -11,7 +11,7 @@ def build_master_df(
     seed: int = 42,
 ) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
-    dates = pd.date_range(start=start, end=end, freq="Q")
+    dates = pd.date_range(start=start, end=end, freq="QE")
     n = len(dates)
 
     cycle = 1.5 * np.sin(np.linspace(0, 8 * np.pi, n))
