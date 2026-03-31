@@ -36,3 +36,9 @@
 
 ## Data Revision Note
 All data pulled from FRED as of [date of analysis]. Real-time vintage data not used. Revision risk acknowledged as acceptable given typical magnitude of housing data revisions.
+
+## Implementation Note
+PATH_A_LOGIT_COEFS in this notebook differ from outputs/path_a/coef.csv.
+run_path_a.py fits on the full panel (in-sample contamination).
+This notebook fits on train window only (<=2007Q4). The train-only
+coefficients are the correct values for OOS evaluation.
