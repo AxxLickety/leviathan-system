@@ -20,6 +20,20 @@
       padding: 18px 20px;
       margin: 18px 0;
     }
+    .finding {
+      border-left: 4px solid #0a58ca;
+      background: #f0f5ff;
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin: 18px 0;
+    }
+    .oos {
+      border-left: 4px solid #1a7a4a;
+      background: #f0fff5;
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin: 18px 0;
+    }
     a { color: #0a58ca; text-decoration: none; }
     a:hover { text-decoration: underline; }
     code {
@@ -28,49 +42,73 @@
       border-radius: 6px;
     }
     ul { padding-left: 20px; }
+    .meta { color: #555; font-size: 0.9em; }
   </style>
 </head>
 <body>
   <h1>Leviathan — Regime-Aware Housing Risk Research</h1>
 
   <p>
-    Leviathan is a macro housing risk research project exploring whether affordability behaves like a
-    regime switch rather than a continuous predictor.
+    Leviathan tests whether housing affordability stress behaves like a
+    <strong>regime switch</strong> rather than a continuous predictor.
+    The core finding: affordability conditions <em>downside risk severity</em>
+    rather than predicting returns — it functions as a gating mechanism,
+    not an alpha signal.
   </p>
 
-  <div class="box">
-    <h2>Current extension: Phase V–VII</h2>
+  <div class="finding">
+    <strong>Core result.</strong>
+    In adverse real-rate regimes, the DTI-based fragility filter identifies
+    periods of materially elevated crash probability. The signal behaves like
+    a binary gate (reduce exposure / stay invested) rather than a continuous
+    dial. DTI does not add stable incremental signal beyond the regime itself.
+  </div>
+
+  <div class="oos">
+    <strong>Out-of-sample validation (Phase OOS, pre-registered design).</strong>
+    Train window: 1990Q1–2007Q4. Test window: 2008Q1–present.
+    All thresholds frozen before the test window was opened.
+    Results on the test window:
     <ul>
-      <li><strong>Phase V</strong>: defines a fragile affordability regime using DTI threshold behavior</li>
-      <li><strong>Phase VI</strong>: tests whether supply expansion amplifies crash probability in fragile regimes</li>
-      <li><strong>Phase VII</strong>: backtests a simple risk overlay that exits exposure during fragile + supply stress states</li>
+      <li>Regime overlay max drawdown: −0.046 vs always-in −0.318</li>
+      <li>Overlay p05: −0.003 vs always-in −0.067</li>
+      <li>Fragile regime conditional crash frequency CI does not overlap stable regime CI</li>
+    </ul>
+    All three pre-specified success criteria met.
+    <span class="meta">Limitation: 48 test-window quarters, sparse crash events — conclusions are directional, not definitive.</span>
+  </div>
+
+  <div class="box">
+    <h2>Research phases</h2>
+    <ul>
+      <li><strong>Phase I–IV</strong>: regime dependence, mechanism validation, delinquency severity — <a href="https://axxlickety.github.io/AxL_Leviathan_Mispricing_Model_DTI/">Phase I</a> · <a href="https://axxlickety.github.io/leviathan-phase2-report/">Phase II</a> · <a href="https://axxlickety.github.io/leviathan-phase3-deliverable/">Phase III</a></li>
+      <li><strong>Phase V</strong>: fragile affordability regime definition — <a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase5/phase5_regime_definition.ipynb">notebook</a></li>
+      <li><strong>Phase VI</strong>: supply × regime interaction test — <a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase6/phase6_interaction_test.ipynb">notebook</a></li>
+      <li><strong>Phase VII</strong>: risk overlay backtest — <a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase7/phase7_affordability_overlay.ipynb">notebook</a></li>
+      <li><strong>Phase OOS</strong>: pre-registered out-of-sample validation — <a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase_oos/phase_oos_validation.ipynb">notebook</a> · <a href="https://github.com/AxxLickety/leviathan-system/blob/main/docs/PHASE_OOS_DESIGN.md">design doc</a></li>
     </ul>
   </div>
 
   <div class="box">
-    <h2>Project links</h2>
-    <ul>
-      <li><a href="https://github.com/AxxLickety/leviathan-system">GitHub repository</a></li>
-      <li><a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase5/phase5_regime_definition.ipynb">Phase V notebook</a></li>
-      <li><a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase6/phase6_interaction_test.ipynb">Phase VI notebook</a></li>
-      <li><a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase7/phase7_affordability_overlay.ipynb">Phase VII notebook</a></li>
-    </ul>
+    <h2>Current work</h2>
+    <p>
+      Extending to cross-market data (Phoenix, Las Vegas, Miami) using FRED HPI
+      and Zillow ZHVI with source-quality weighting. Goal: increase regime
+      realization count and test whether the gating mechanism holds across
+      de-synchronized housing cycles.
+    </p>
   </div>
 
   <div class="box">
-    <h2>Earlier public memos</h2>
+    <h2>Repository</h2>
     <ul>
-      <li><a href="https://axxlickety.github.io/leviathan-phase2-report/">Phase II</a></li>
-      <li><a href="https://axxlickety.github.io/leviathan-phase3-deliverable/">Phase III</a></li>
-      <li><a href="https://axxlickety.github.io/AxL_Leviathan_Mispricing_Model_DTI/">Phase I</a></li>
+      <li><a href="https://github.com/AxxLickety/leviathan-system">GitHub — full codebase</a></li>
+      <li><a href="https://github.com/AxxLickety/leviathan-system/blob/main/docs/PHASE_OOS_DESIGN.md">OOS design document (pre-registered)</a></li>
+      <li><a href="code.html">Codebase overview</a></li>
+      <li><a href="evolution.html">Research evolution</a></li>
     </ul>
   </div>
 
-  <p><em>Last updated: Phase V–VII extension added.</em></p>
+  <p class="meta">Last updated: Phase OOS complete. Cross-market extension in progress.</p>
 </body>
 </html>
-<div style="margin-top:20px;">
-  <a href="code.html">→ View Codebase</a><br>
-  <a href="evolution.html">→ View Research Evolution</a><br>
-  <a href="https://github.com/AxxLickety/leviathan-system">→ View GitHub Repository</a>
-</div>
