@@ -5,3 +5,11 @@ NORTH_AMERICA = [
     "austin",
     "toronto",
 ]
+
+# Extended universe — FRED HPI + Zillow ZHVI available
+NORTH_AMERICA_EXTENDED = [
+    "austin",
+    "phoenix",
+    "las_vegas",
+    "miami",
+]
