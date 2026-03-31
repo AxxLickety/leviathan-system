@@ -34,6 +34,13 @@
       padding: 14px 18px;
       margin: 18px 0;
     }
+    .typology {
+      border-left: 4px solid #7a4a1a;
+      background: #fff8f0;
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin: 18px 0;
+    }
     a { color: #0a58ca; text-decoration: none; }
     a:hover { text-decoration: underline; }
     code {
@@ -75,7 +82,18 @@
       <li>Fragile regime conditional crash frequency CI does not overlap stable regime CI</li>
     </ul>
     All three pre-specified success criteria met.
-    <span class="meta">Limitation: 48 test-window quarters, sparse crash events — conclusions are directional, not definitive.</span>
+    Cross-market validation (Austin, Phoenix, Las Vegas, Miami): direction holds across all four cities, pooled max drawdown −86% → 0%.
+    <span class="meta">Limitation: sparse crash events and accommodative-regime observations — conclusions are directional, not definitive.</span>
+  </div>
+
+  <div class="typology">
+    <strong>Phase VIII — Crash regime typology.</strong>
+    The filter behaves differently across two distinct crash types:
+    <ul>
+      <li><strong>Type A (Systemic):</strong> GFC 2008 — fast, deep, cross-market. Adverse regime continuously in place. Overlay sidesteps −47% to −61% drawdowns in Phoenix, Las Vegas, Miami at zero opportunity cost.</li>
+      <li><strong>Type B (Cyclical):</strong> 2022 rate-rise — slow, shallow, city-specific. Regime correctly turns adverse at 2021Q4, but correction arrives 10–14 quarters later, outside the 4Q crash window. Austin −12%, others near flat.</li>
+    </ul>
+    <span class="meta">Implication: the filter is a systemic risk gate. Extending to cyclical corrections requires a longer look-ahead window and city-level supply controls.</span>
   </div>
 
   <div class="box">
@@ -86,17 +104,9 @@
       <li><strong>Phase VI</strong>: supply × regime interaction test — <a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase6/phase6_interaction_test.ipynb">notebook</a></li>
       <li><strong>Phase VII</strong>: risk overlay backtest — <a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase7/phase7_affordability_overlay.ipynb">notebook</a></li>
       <li><strong>Phase OOS</strong>: pre-registered out-of-sample validation — <a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase_oos/phase_oos_validation.ipynb">notebook</a> · <a href="https://github.com/AxxLickety/leviathan-system/blob/main/docs/PHASE_OOS_DESIGN.md">design doc</a></li>
+      <li><strong>Phase OOS (cross-market)</strong>: regime-only overlay across 4 cities — <a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase_oos/phase_oos_crossmarket_regime_only.ipynb">notebook</a></li>
+      <li><strong>Phase VIII</strong>: crash regime typology — systemic vs cyclical — <a href="https://github.com/AxxLickety/leviathan-system/blob/main/notebooks/phase8/phase8_crash_typology.ipynb">notebook</a> · <a href="https://github.com/AxxLickety/leviathan-system/blob/main/docs/PHASE_VIII_CRASH_TYPOLOGY.md">memo</a></li>
     </ul>
-  </div>
-
-  <div class="box">
-    <h2>Current work</h2>
-    <p>
-      Extending to cross-market data (Phoenix, Las Vegas, Miami) using FRED HPI
-      and Zillow ZHVI with source-quality weighting. Goal: increase regime
-      realization count and test whether the gating mechanism holds across
-      de-synchronized housing cycles.
-    </p>
   </div>
 
   <div class="box">
@@ -109,6 +119,6 @@
     </ul>
   </div>
 
-  <p class="meta">Last updated: Phase OOS complete. Cross-market extension in progress.</p>
+  <p class="meta">Last updated: Phase VIII complete. Cross-market extension done.</p>
 </body>
 </html>
